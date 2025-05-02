@@ -89,12 +89,13 @@ body {
   }
 }
 
-/* Additional styles for seat selection */
+/* Updated styles for seat selection */
 .seat {
-  @apply w-10 h-10 rounded-md border flex items-center justify-center cursor-pointer transition-colors;
+  /* Use flexbox for centering icon and number */
+  @apply w-10 h-10 sm:w-12 sm:h-12 rounded-md border flex flex-col items-center justify-center cursor-pointer transition-colors relative;
 }
 .seat-available {
-  @apply bg-card border-border hover:bg-secondary;
+  @apply bg-card border-border hover:bg-secondary text-foreground; /* Ensure text is visible */
 }
 .seat-selected {
   @apply bg-primary text-primary-foreground border-primary;
@@ -102,4 +103,3 @@ body {
 .seat-unavailable {
   @apply bg-muted text-muted-foreground border-muted cursor-not-allowed;
 }
-

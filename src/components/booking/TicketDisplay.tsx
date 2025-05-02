@@ -18,23 +18,29 @@ export default function TicketDisplay({ ticket, onRestart }: TicketDisplayProps)
   const qrCodeRef = useRef<HTMLDivElement>(null);
 
   /**
-   * Generates a single-line string representation of the ticket details for the QR code,
-   * using key-value pairs separated by semicolons.
+   * Generates a multi-line string representation of the ticket details for the QR code.
+   * Using newlines (\n) instead of semicolons might improve readability for some scanners,
+   * but semicolon separation is more common for structured data within QR codes.
+   *
+   * Note: The effectiveness of newline separation depends on the QR scanner application.
+   * Some might interpret it correctly, others might treat it as a single block of text.
    */
   const generateQRData = (ticketData: Ticket): string => {
-    const dataPairs = [
-      `Passenger:${ticketData.userName}`,
-      `NIC:${ticketData.nic}`,
-      `Route:${ticketData.startPoint} to ${ticketData.endPoint}`,
-      `Bus:${ticketData.busName} (${ticketData.busType})`,
-      `Departure:${ticketData.departureTime}`,
-      `Seats:${ticketData.seatNumbers.join(',')}`,
-      `Price:LKR ${ticketData.totalPrice.toLocaleString()}`,
-      `Booked:${format(ticketData.bookingDate, 'yyyy-MM-dd HH:mm')}`, // Using a more standard format
-      `TicketID:${ticketData.id}`
+    const dataLines = [
+      `Passenger: ${ticketData.userName}`,
+      `NIC: ${ticketData.nic}`,
+      `Route: ${ticketData.startPoint} to ${ticketData.endPoint}`,
+      `Bus: ${ticketData.busName} (${ticketData.busType})`,
+      `Departure: ${ticketData.departureTime}`,
+      `Seats: ${ticketData.seatNumbers.join(',')}`,
+      `Price: LKR ${ticketData.totalPrice.toLocaleString()}`,
+      `Booked: ${format(ticketData.bookingDate, 'yyyy-MM-dd HH:mm')}`,
+      `TicketID: ${ticketData.id}`
     ];
-    return dataPairs.join('; '); // Join pairs with a semicolon and space
+    // Join with newline characters. Consider using '; ' for broader compatibility.
+    return dataLines.join('\n');
   };
+
 
   const downloadQRCode = () => {
     const canvas = qrCodeRef.current?.querySelector('canvas');
@@ -52,7 +58,9 @@ export default function TicketDisplay({ ticket, onRestart }: TicketDisplayProps)
   };
 
   const qrData = generateQRData(ticket);
-  console.log("QR Data:", qrData); // Log the generated QR data for debugging
+  // Log the data being encoded into the QR code for debugging purposes.
+  // Check the console to ensure the format is as expected.
+  console.log("Generated QR Data:\n", qrData);
 
   return (
     <div className="space-y-6 flex flex-col items-center">
