@@ -21,7 +21,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} font-sans antialiased`}>
+      {/* Added suppressHydrationWarning to handle potential mismatches caused by browser extensions */}
+      <body className={`${geistSans.variable} font-sans antialiased`} suppressHydrationWarning={true}>
         <AppProvider> {/* Wrap with AppProvider */}
           {children}
           <Toaster /> {/* Add Toaster here */}
