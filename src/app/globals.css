@@ -91,15 +91,44 @@ body {
 
 /* Updated styles for seat selection */
 .seat {
-  /* Use flexbox for centering icon and number */
-  @apply w-10 h-10 sm:w-12 sm:h-12 rounded-md border flex flex-col items-center justify-center cursor-pointer transition-colors relative;
+  /* Use flexbox for centering icon */
+  @apply w-10 h-10 sm:w-12 sm:h-12 rounded-md border flex items-center justify-center cursor-pointer transition-colors relative shrink-0;
+  /* Added shrink-0 to prevent flex items from shrinking */
 }
 .seat-available {
-  @apply bg-card border-border hover:bg-secondary text-foreground; /* Ensure text is visible */
+  /* Slightly lighter background than card, more prominent hover */
+  @apply bg-card border-border text-muted-foreground/60 hover:bg-secondary hover:border-primary hover:text-primary;
 }
 .seat-selected {
-  @apply bg-primary text-primary-foreground border-primary;
+  /* Use primary color for selected state */
+  @apply bg-primary border-primary text-primary-foreground;
 }
 .seat-unavailable {
-  @apply bg-muted text-muted-foreground border-muted cursor-not-allowed;
+  /* More visually distinct unavailable state */
+  @apply bg-destructive/20 border-destructive/30 text-destructive/60 cursor-not-allowed;
+}
+/* Specific styles for the Sofa icon within the seat */
+.seat svg {
+  @apply transition-colors;
+}
+.seat-available svg {
+  /* Default icon color for available */
+   @apply text-muted-foreground/60;
+}
+.seat-available:hover svg {
+  /* Icon color on hover for available */
+  @apply text-primary;
+}
+.seat-selected svg {
+  /* Icon color for selected */
+  @apply text-primary-foreground;
+}
+.seat-unavailable svg {
+   /* Icon color for unavailable */
+  @apply text-destructive/60;
+}
+
+/* Optional: Add a subtle shadow on hover for available seats */
+.seat-available:hover {
+  @apply shadow-md;
 }
