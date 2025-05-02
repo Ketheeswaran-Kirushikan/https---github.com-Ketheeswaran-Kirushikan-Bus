@@ -16,19 +16,22 @@ interface TicketDisplayProps {
 export default function TicketDisplay({ ticket, onRestart }: TicketDisplayProps) {
   const qrCodeRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * Generates a string representation of the ticket details for the QR code.
+   * Includes specific fields as requested.
+   */
   const generateQRData = (ticketData: Ticket): string => {
-    // Select key details for QR code to keep it manageable
-    return JSON.stringify({
-      ticketId: ticketData.id,
-      name: ticketData.userName,
-      nic: ticketData.nic,
-      route: `${ticketData.startPoint} to ${ticketData.endPoint}`,
-      bus: ticketData.busName,
-      departure: ticketData.departureTime,
-      seats: ticketData.seatNumbers.join(','),
-      price: `LKR ${ticketData.totalPrice}`,
-      date: format(ticketData.bookingDate, 'yyyy-MM-dd HH:mm'),
-    });
+    return `
+Passenger: ${ticketData.userName}
+NIC: ${ticketData.nic}
+Route: ${ticketData.startPoint} to ${ticketData.endPoint}
+Bus: ${ticketData.busName} (${ticketData.busType})
+Departure: ${ticketData.departureTime}
+Seats: ${ticketData.seatNumbers.join(', ')}
+Total Price: LKR ${ticketData.totalPrice.toLocaleString()}
+Booked On: ${format(ticketData.bookingDate, 'PPp')}
+Ticket ID: ${ticketData.id}
+    `.trim(); // Use trim to remove leading/trailing whitespace
   };
 
   const downloadQRCode = () => {
