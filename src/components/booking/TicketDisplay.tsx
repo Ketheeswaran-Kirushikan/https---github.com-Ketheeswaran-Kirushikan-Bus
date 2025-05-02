@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useRef } from 'react';
@@ -17,21 +18,22 @@ export default function TicketDisplay({ ticket, onRestart }: TicketDisplayProps)
   const qrCodeRef = useRef<HTMLDivElement>(null);
 
   /**
-   * Generates a string representation of the ticket details for the QR code.
-   * Includes specific fields as requested.
+   * Generates a single-line string representation of the ticket details for the QR code,
+   * using key-value pairs separated by semicolons.
    */
   const generateQRData = (ticketData: Ticket): string => {
-    return `
-Passenger: ${ticketData.userName}
-NIC: ${ticketData.nic}
-Route: ${ticketData.startPoint} to ${ticketData.endPoint}
-Bus: ${ticketData.busName} (${ticketData.busType})
-Departure: ${ticketData.departureTime}
-Seats: ${ticketData.seatNumbers.join(', ')}
-Total Price: LKR ${ticketData.totalPrice.toLocaleString()}
-Booked On: ${format(ticketData.bookingDate, 'PPp')}
-Ticket ID: ${ticketData.id}
-    `.trim(); // Use trim to remove leading/trailing whitespace
+    const dataPairs = [
+      `Passenger:${ticketData.userName}`,
+      `NIC:${ticketData.nic}`,
+      `Route:${ticketData.startPoint} to ${ticketData.endPoint}`,
+      `Bus:${ticketData.busName} (${ticketData.busType})`,
+      `Departure:${ticketData.departureTime}`,
+      `Seats:${ticketData.seatNumbers.join(',')}`,
+      `Price:LKR ${ticketData.totalPrice.toLocaleString()}`,
+      `Booked:${format(ticketData.bookingDate, 'yyyy-MM-dd HH:mm')}`, // Using a more standard format
+      `TicketID:${ticketData.id}`
+    ];
+    return dataPairs.join('; '); // Join pairs with a semicolon and space
   };
 
   const downloadQRCode = () => {
@@ -50,6 +52,7 @@ Ticket ID: ${ticketData.id}
   };
 
   const qrData = generateQRData(ticket);
+  console.log("QR Data:", qrData); // Log the generated QR data for debugging
 
   return (
     <div className="space-y-6 flex flex-col items-center">
@@ -63,7 +66,7 @@ Ticket ID: ${ticketData.id}
             <QRCode
               value={qrData}
               size={192} // Adjust size as needed
-              level={'M'} // Error correction level
+              level={'M'} // Error correction level: L, M, Q, H
               includeMargin={true}
               className="inline-block border-4 border-secondary p-1 rounded-md"
             />
