@@ -1,31 +1,27 @@
-import type { Metadata } from 'next';
-import { Geist } from 'next/font/google'; // Using only Geist Sans for simplicity
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster"; // Import Toaster
-import AppProvider from '@/context/AppContext'; // Import AppProvider
+import { Inter } from 'next/font/google';
+import { AppProvider } from '@/context/AppContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
+const inter = Inter({ subsets: ['latin'] });
 
-export const metadata: Metadata = {
-  title: 'Lanka Bus Ticket',
-  description: 'Book your bus tickets in Sri Lanka easily.',
+export const metadata = {
+  title: 'Bus Booking App',
+  description: 'A simple bus booking application',
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
-      {/* Added suppressHydrationWarning to handle potential mismatches caused by browser extensions */}
-      <body className={`${geistSans.variable} font-sans antialiased`} suppressHydrationWarning={true}>
-        <AppProvider> {/* Wrap with AppProvider */}
+      <body className={inter.className}>
+        <AppProvider>
           {children}
-          <Toaster /> {/* Add Toaster here */}
+          <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} closeOnClick pauseOnHover />
         </AppProvider>
       </body>
     </html>

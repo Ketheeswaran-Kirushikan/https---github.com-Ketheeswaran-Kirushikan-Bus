@@ -1,101 +1,165 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { UserProfile } from '@/types/booking';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { toast } from 'react-toastify';
 
-interface AppContextProps {
-  user: UserProfile | null;
-  login: (email: string, password: string) => void;
+interface AuthContextType {
+  user: { id: string; email: string; name: string } | null;
+  login: (email: string, password: string) => Promise<void>;
+  register: (values: {
+    userName: string;
+    nic: string;
+    email: string;
+    phoneNumber: string;
+    password: string;
+  }) => Promise<void>;
   logout: () => void;
-  register: (userData: Omit<UserProfile, 'id'>) => void;
 }
 
-const AppContext = createContext<AppContextProps | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user storage (replace with actual storage like localStorage or backend)
-let mockUsers: UserProfile[] = [];
-let mockPasswordStore: Record<string, string> = {}; // email -> password hash (in real app, never store plain passwords)
+export function AppProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<{ id: string; email: string; name: string } | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
-export default function AppProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(null);
-
-  // Load user from localStorage on initial mount (optional persistence)
+  // Set isClient to true after the component mounts on the client
   useEffect(() => {
-    const storedUser = localStorage.getItem('lankaBusUser');
-    const storedUsers = localStorage.getItem('lankaBusUsers');
-    const storedPasswords = localStorage.getItem('lankaBusPasswords');
-
-    if (storedUsers) {
-        mockUsers = JSON.parse(storedUsers);
-    }
-     if (storedPasswords) {
-        mockPasswordStore = JSON.parse(storedPasswords);
-    }
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    setIsClient(true);
   }, []);
 
-   const saveState = (currentUser: UserProfile | null) => {
-    localStorage.setItem('lankaBusUser', JSON.stringify(currentUser));
-    localStorage.setItem('lankaBusUsers', JSON.stringify(mockUsers));
-    localStorage.setItem('lankaBusPasswords', JSON.stringify(mockPasswordStore));
-   }
+  // Initialize user state from localStorage on the client side
+  useEffect(() => {
+    if (!isClient) return;
 
-  const login = (email: string, password: string) => {
-    const foundUser = mockUsers.find(u => u.email === email);
-    // IMPORTANT: NEVER compare plain text passwords in a real app.
-    // This is a highly insecure mock. Use password hashing (e.g., bcrypt).
-    const storedPassword = mockPasswordStore[email];
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          console.log('Initialized user from localStorage:', parsedUser);
+          if (parsedUser.id) {
+            setUser(parsedUser);
+          } else {
+            console.error('Stored user missing id:', parsedUser);
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            setUser(null);
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+      }
+    }
+  }, [isClient]);
 
-    if (foundUser && storedPassword === password) { // Insecure comparison
-      setUser(foundUser);
-      saveState(foundUser);
-    } else {
-      throw new Error('Invalid email or password.');
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await fetch('http://172.20.10.2:9002/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      console.log('Login response status:', response.status);
+      console.log('Login response headers:', [...response.headers.entries()]);
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || `Login failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.user.id) {
+        throw new Error('Login response missing user id');
+      }
+
+      // Store the token and user data in localStorage
+      localStorage.setItem('token', data.token);
+      const userData = {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.name,
+      };
+      localStorage.setItem('user', JSON.stringify(userData));
+      console.log('Set user after login:', userData);
+      setUser(userData);
+    } catch (error: any) {
+      console.error('Login error details:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+      });
+      throw new Error(error.message || 'Failed to login. Please check your network and try again.');
+    }
+  };
+
+  const register = async (values: {
+    userName: string;
+    nic: string;
+    email: string;
+    phoneNumber: string;
+    password: string;
+  }) => {
+    try {
+      const response = await fetch('http://172.20.10.2:9002/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: values.email,
+          password: values.password,
+          name: values.userName,
+          nic: values.nic,
+          phoneNumber: values.phoneNumber,
+        }),
+      });
+
+      console.log('Register response status:', response.status);
+      console.log('Register response headers:', [...response.headers.entries()]);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
+      }
+    } catch (error: any) {
+      console.error('Register error details:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+      });
+      throw new Error(error.message || 'Failed to register. Please check your network and try again.');
     }
   };
 
   const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
-    saveState(null);
-  };
-
-  const register = (userData: Omit<UserProfile, 'id'>) => {
-    // Check if email or NIC already exists
-    if (mockUsers.some(u => u.email === userData.email)) {
-      throw new Error('Email already registered.');
-    }
-    if (mockUsers.some(u => u.nic === userData.nic)) {
-      throw new Error('NIC already registered.');
-    }
-
-    // In a real app, hash the password here before storing
-    const hashedPassword = userData.password; // Highly insecure mock
-
-    const newUser: UserProfile = {
-      id: `user-${Date.now()}`, // Simple unique ID
-      ...userData,
-    };
-
-    mockUsers.push(newUser);
-    mockPasswordStore[newUser.email] = hashedPassword; // Store insecure "hashed" password
-
-    saveState(user); // Save updated user list and passwords
-    console.log('Registered users:', mockUsers);
-    console.log('Password store:', mockPasswordStore); // For debugging only
+    toast.info('Logged out successfully.', {
+      position: 'top-right',
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
   };
 
   return (
-    <AppContext.Provider value={{ user, login, logout, register }}>
+    <AuthContext.Provider value={{ user, login, register, logout }}>
       {children}
-    </AppContext.Provider>
+    </AuthContext.Provider>
   );
 }
 
 export function useAppContext() {
-  const context = useContext(AppContext);
-  if (context === undefined) {
+  const context = useContext(AuthContext);
+  if (!context) {
     throw new Error('useAppContext must be used within an AppProvider');
   }
   return context;

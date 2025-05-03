@@ -3,11 +3,11 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { Bus, Seat } from '@/types/booking';
+import type { Bus, Seat } from '@/types/schema';
 import { ArrowRight, Sofa } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'react-toastify';
 
 interface SeatSelectionProps {
   bus: Bus;
@@ -17,12 +17,18 @@ interface SeatSelectionProps {
 }
 
 export default function SeatSelection({ bus, selectedSeats, unavailableSeats, onSeatSelect }: SeatSelectionProps) {
-  const { toast } = useToast();
   const [currentSelection, setCurrentSelection] = useState<Seat[]>(selectedSeats);
 
   const handleSeatClick = (seatNumber: number) => {
     if (unavailableSeats.includes(seatNumber)) {
-      toast({ variant: "default", title: "Seat Unavailable", description: `Seat ${seatNumber} is already booked.` });
+      toast.warning(`Seat ${seatNumber} is already booked.`, {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       return; // Cannot select unavailable seats
     }
 
@@ -31,18 +37,20 @@ export default function SeatSelection({ bus, selectedSeats, unavailableSeats, on
     if (isSelected) {
       setCurrentSelection(currentSelection.filter(seat => seat.number !== seatNumber));
     } else {
-       // Optional: Limit selection if needed, e.g., max 5 seats
-      // if (currentSelection.length >= 5) {
-      //   toast({ variant: "destructive", title: "Selection Limit", description: "You can select a maximum of 5 seats." });
-      //   return;
-      // }
       setCurrentSelection([...currentSelection, { number: seatNumber, price: bus.price }]);
     }
   };
 
-   const handleConfirmSeats = () => {
+  const handleConfirmSeats = () => {
     if (currentSelection.length === 0) {
-      toast({ variant: "destructive", title: "No Seats Selected", description: "Please select at least one seat." });
+      toast.error('Please select at least one seat.', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       return;
     }
     onSeatSelect(currentSelection);
@@ -67,24 +75,22 @@ export default function SeatSelection({ bus, selectedSeats, unavailableSeats, on
       for (let seatIndex = 0; seatIndex < seatsPerRow; seatIndex++) {
         const seatNumber = row * seatsPerRow + seatIndex + 1;
         if (seatNumber > bus.totalSeats) {
-             // Add placeholder for empty slots in the last row if needed
-             if (seatIndex === 2) {
-                rowSeats.push(<div key={`empty-aisle-${row}-${seatIndex}`} className="w-6 sm:w-8"></div>);
-             }
-             rowSeats.push(<div key={`empty-${row}-${seatIndex}`} className="seat invisible"></div>); // Invisible placeholder
-             continue;
-        };
+          if (seatIndex === 2) {
+            rowSeats.push(<div key={`empty-aisle-${row}-${seatIndex}`} className="w-6 sm:w-8"></div>);
+          }
+          rowSeats.push(<div key={`empty-${row}-${seatIndex}`} className="seat invisible"></div>);
+          continue;
+        }
 
         const isSelected = currentSelection.some(seat => seat.number === seatNumber);
         const isUnavailable = unavailableSeats.includes(seatNumber);
         const seatClass = cn(
-          'seat', // Base class for styling
+          'seat',
           isUnavailable ? 'seat-unavailable' : (isSelected ? 'seat-selected' : 'seat-available')
         );
 
-        // Add aisle space visually after the second seat in the row
         if (seatIndex === 2) {
-          rowSeats.push(<div key={`aisle-${row}`} className="w-6 sm:w-8"></div>); // Aisle spacer
+          rowSeats.push(<div key={`aisle-${row}`} className="w-6 sm:w-8"></div>);
         }
 
         rowSeats.push(
@@ -100,8 +106,6 @@ export default function SeatSelection({ bus, selectedSeats, unavailableSeats, on
             title={`Seat ${seatNumber}${isUnavailable ? ' (Unavailable)' : ''}`}
           >
             <Sofa className="h-5 w-5 sm:h-6 sm:w-6" />
-            {/* Optional: Show seat number inside or below
-            <span className="text-[8px] sm:text-[10px] font-medium absolute bottom-0.5">{seatNumber}</span> */}
           </div>
         );
       }
@@ -120,44 +124,37 @@ export default function SeatSelection({ bus, selectedSeats, unavailableSeats, on
     return seatsLayout;
   };
 
-
   const totalPrice = currentSelection.reduce((sum, seat) => sum + seat.price, 0);
   const availableSeatCount = bus.totalSeats - unavailableSeats.length;
 
   return (
     <div className="space-y-6">
-       {/* Header */}
       <div className="text-center">
         <h3 className="font-semibold text-lg text-primary">Select your seat</h3>
         <p className="text-sm text-muted-foreground">{availableSeatCount} seats available</p>
       </div>
 
       <div className="p-4 border rounded-lg bg-secondary/30">
-
-        {/* Seat Layout Area */}
         <ScrollArea className="h-[350px] sm:h-[400px] w-full pr-4 mb-4">
-           {/* Optional: Add Bus Driver Area Indicator */}
-           {/* <div className="mb-4 text-center text-xs text-muted-foreground">[ Driver ]</div> */}
-           <div className="flex flex-col items-center gap-2">
-             {renderSeats()}
-           </div>
+          <div className="flex flex-col items-center gap-2">
+            {renderSeats()}
+          </div>
         </ScrollArea>
 
-        {/* Legend */}
-         <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm border-t pt-4">
-            <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded border seat-available"><Sofa className="w-3 h-3"/></div> Available</div>
-            <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded border seat-selected"><Sofa className="w-3 h-3"/></div> Selected</div>
-            <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded border seat-unavailable"><Sofa className="w-3 h-3"/></div> Unavailable</div>
-         </div>
+        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm border-t pt-4">
+          <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded border seat-available"><Sofa className="w-3 h-3"/></div> Available</div>
+          <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded border seat-selected"><Sofa className="w-3 h-3"/></div> Selected</div>
+          <div className="flex items-center gap-1.5"><div className="w-4 h-4 rounded border seat-unavailable"><Sofa className="w-3 h-3"/></div> Unavailable</div>
+        </div>
       </div>
 
       <div className="text-center space-y-2">
-         <p className="text-lg font-semibold">
-            Selected: <Badge variant="secondary">{currentSelection.map(s => s.number).sort((a, b) => a - b).join(', ') || 'None'}</Badge>
-         </p>
-         <p className="text-xl font-bold text-primary">
-            Total Price: LKR {totalPrice.toLocaleString()}
-         </p>
+        <p className="text-lg font-semibold">
+          Selected: <Badge variant="secondary">{currentSelection.map(s => s.number).sort((a, b) => a - b).join(', ') || 'None'}</Badge>
+        </p>
+        <p className="text-xl font-bold text-primary">
+          Total Price: LKR {totalPrice.toLocaleString()}
+        </p>
       </div>
 
       <Button onClick={handleConfirmSeats} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">

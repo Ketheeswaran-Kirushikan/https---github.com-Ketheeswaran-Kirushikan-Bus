@@ -7,8 +7,8 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/context/AppContext';
+import { toast } from 'react-toastify';
 
 // NIC format: Either 9 digits followed by 'V' or 'X', or 12 digits
 const nicRegex = /^(\d{9}[VX]|\d{12})$/;
@@ -29,7 +29,6 @@ interface RegisterFormProps {
 
 export default function RegisterForm({ onRegisterSuccess }: RegisterFormProps) {
   const { register } = useAppContext();
-  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,21 +41,26 @@ export default function RegisterForm({ onRegisterSuccess }: RegisterFormProps) {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Simulate register API call
-    console.log('Registering user:', values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      register(values);
-      toast({
-        title: 'Registration Successful',
-        description: 'You can now log in with your credentials.',
+      await register(values);
+      toast.success('Registration Successful! You can now log in with your credentials.', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
       });
       onRegisterSuccess(); // Switch to login view
     } catch (error: any) {
-       toast({
-        variant: 'destructive',
-        title: 'Registration Failed',
-        description: error.message || 'Could not register. Please try again.',
+      toast.error(error.message || 'Could not register. Please try again.', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
       });
     }
   }

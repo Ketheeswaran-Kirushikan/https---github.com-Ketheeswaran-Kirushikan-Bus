@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle } from 'lucide-react';
-import type { Bus, Seat } from '@/types/booking';
+import type { Bus, Seat } from '@/types/schema';
+import { toast } from 'react-toastify';
 
 interface PaymentSimulationProps {
   bus: Bus;
@@ -20,16 +21,22 @@ export default function PaymentSimulation({ bus, seats, onConfirm }: PaymentSimu
   const seatNumbers = seats.map(s => s.number).join(', ');
 
   const handleConfirmPayment = () => {
+    toast.info('Initiating payment simulation...', {
+      position: 'top-right',
+      autoClose: 2000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
     setIsProcessing(true);
-    // Simulate payment processing delay
     setTimeout(() => {
       setIsProcessing(false);
       setIsSuccess(true);
-      // Wait a moment to show success, then proceed
       setTimeout(() => {
         onConfirm();
       }, 1500);
-    }, 2000); // Simulate 2 seconds processing time
+    }, 2000);
   };
 
   return (
@@ -44,7 +51,7 @@ export default function PaymentSimulation({ bus, seats, onConfirm }: PaymentSimu
             <span className="text-muted-foreground">Bus:</span>
             <span className="font-medium">{bus.name} ({bus.type})</span>
           </div>
-           <div className="flex justify-between">
+          <div className="flex justify-between">
             <span className="text-muted-foreground">Departure:</span>
             <span className="font-medium">{bus.departureTime}</span>
           </div>
@@ -59,26 +66,26 @@ export default function PaymentSimulation({ bus, seats, onConfirm }: PaymentSimu
         </CardContent>
       </Card>
 
-       <div className="text-center">
-         {isProcessing ? (
-            <Button disabled className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing Payment...
-            </Button>
-         ) : isSuccess ? (
-            <Button disabled className="w-full bg-green-600 text-white">
-              <CheckCircle className="mr-2 h-4 w-4" />
-              Payment Successful! Generating Ticket...
-            </Button>
-         ) : (
-            <Button onClick={handleConfirmPayment} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-              Confirm Payment (Simulated)
-            </Button>
-         )}
-       </div>
-       <p className="text-xs text-muted-foreground text-center">
-         Note: This is a simulated payment. No real transaction will occur.
-       </p>
+      <div className="text-center">
+        {isProcessing ? (
+          <Button disabled className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Processing Payment...
+          </Button>
+        ) : isSuccess ? (
+          <Button disabled className="w-full bg-green-600 text-white">
+            <CheckCircle className="mr-2 h-4 w-4" />
+            Payment Successful! Generating Ticket...
+          </Button>
+        ) : (
+          <Button onClick={handleConfirmPayment} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
+            Confirm Payment (Simulated)
+          </Button>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground text-center">
+        Note: This is a simulated payment. No real transaction will occur.
+      </p>
     </div>
   );
 }

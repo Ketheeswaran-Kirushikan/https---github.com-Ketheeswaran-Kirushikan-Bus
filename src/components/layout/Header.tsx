@@ -20,7 +20,7 @@ export default function Header() {
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <BusFront className="h-6 w-6" />
-          <h1 className="text-xl font-bold">Lanka Bus Ticket</h1>
+          <h1 className="text-xl font-bold">Smart Ride Pass</h1>
         </div>
         {user && (
           <DropdownMenu>
